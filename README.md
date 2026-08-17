@@ -95,7 +95,13 @@ gh repo create WinApps-share/homebrew-tap --push --public --source "$(brew --rep
 
 - 配置在 `renovate.json`，默认**每周一**自动扫描（可手动 `workflow_dispatch` 触发）；
 - 检测到新版本时，Renovate 会向**本仓库**自动开一个 PR，自动更新 `version`、`url`（若含版本号）与 `sha256`；
-- 该 PR 会先通过上方的 `audit.yml` 检查，你 review 后合并即可，用户 `brew upgrade` 就能拿到新版本。
+- 该 PR 已启用**自动合并**：当 GitHub 要求的检查（`audit.yml`）全部通过后，由 GitHub 自动合并，无需你手动点。`brew upgrade` 就能拿到新版本。
+
+> ⚠️ **自动合并的安全前提（务必配置）**：自动合并 ≠ 盲目合并。请到仓库 `Settings → Branches → Add branch protection rule` 为 `main` 分支启用保护：
+> - 勾选 **Require status checks to pass before merging**
+> - 把 **`audit`**（来自 `.github/workflows/audit.yml`）设为 required check
+>
+> 这样只有 `brew audit` + `brew style` 都通过时才会自动合并；若检查失败或未配置保护，PR 会一直保留待你处理。自动合并不会做「能否真正编译/安装」的验证，重要软件建议仍人工抽查。不想自动合并时把 `renovate.json` 里 homebrew 包的 `automerge` 改回 `false` 即可。
 
 ⚠️ **首次使用前需配置一个 Secret**：
 
