@@ -1,0 +1,38 @@
+# 官方 brew tap-new 生成的审计工作流：提交/PR 时自动检查 formula 与 cask 的语法与质量。
+name: brew audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Custom cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            ~/Library/Caches/Homebrew/Cask
+            ~/AppData/Local/Temp/homebrew
+          key: ${{ runner.os }}-brew
+          restore-keys: |
+            ${{ runner.os }}-brew
+
+      - name: Run brew audit
+        run: |
+          brew audit --strict --online --new --tap="${{ github.repository }}"
+
+      - name: Run brew style
+        run: |
+          brew style --check "${{ github.repository }}"
