@@ -19,7 +19,7 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@master
 
       - name: Custom cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/Library/Caches/Homebrew
