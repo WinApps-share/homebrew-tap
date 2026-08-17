@@ -81,6 +81,33 @@ brew install gh
 gh repo create WinApps-share/homebrew-tap --push --public --source "$(brew --repository WinApps-share/tap)"
 ```
 
+## 自动检查与自动更新
+
+本 tap 提供两层自动化：
+
+### 自动检查（audit.yml）
+
+每次 `push` / `pull_request` 都会自动运行 `brew audit` 与 `brew style`，确保 formula / cask 语法与质量没问题。PR 未通过这些检查无法合并。
+
+### 自动更新（Renovate）
+
+通过 [Renovate](https://docs.renovatebot.com/modules/manager/homebrew/) 定时扫描 `Formula/` 与 `Cask/` 的上游最新版本：
+
+- 配置在 `renovate.json`，默认**每周一**自动扫描（可手动 `workflow_dispatch` 触发）；
+- 检测到新版本时，Renovate 会向**本仓库**自动开一个 PR，自动更新 `version`、`url`（若含版本号）与 `sha256`；
+- 该 PR 会先通过上方的 `audit.yml` 检查，你 review 后合并即可，用户 `brew upgrade` 就能拿到新版本。
+
+⚠️ **首次使用前需配置一个 Secret**：
+
+在仓库 `Settings → Secrets and variables → Actions → New repository secret` 里新增：
+
+```
+Name:  RENOVATE_TOKEN
+Value: 你的 GitHub Personal Access Token（fine-grained PAT，权限勾选该仓库的 Contents: Read & Write）
+```
+
+> 说明：Renovate 需要一个有写权限的 token 才能向本仓库创建 PR。可用你自己的 PAT；如需仅用于 CI 的机器人，可另建一个 GitHub App 或机器人账号。
+
 ## 常见问题
 
 - **Formula 找不到**：确认文件在 `Formula/` 子目录且扩展名为 `.rb`。

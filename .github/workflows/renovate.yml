@@ -1,0 +1,24 @@
+# 定时运行 Renovate：扫描 Formula/ 与 Cask/ 上游新版本，自动向本仓库开 PR。
+# Renovate 会自动更新 formula/cask 里的 version、url（若含版本号）与 sha256。
+name: renovate
+
+on:
+  schedule:
+    # 每周一 08:00 UTC（北京时间每周一 16:00）自动扫描
+    - cron: "0 8 * * 1"
+  workflow_dispatch: # 支持手动触发一次
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Renovate
+        uses: renovatebot/github-action@v41.0.0
+        with:
+          configurationFile: renovate.json
+          token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          LOG_LEVEL: debug
