@@ -1,7 +1,5 @@
-# 自动检查并更新本 tap 中的 formula / cask 到上游最新版本（类似 Scoop 的 Excavator）。
-# 每 12 小时检查一次；若有新版本，直接在本仓库 main 分支更新 version / sha256 并提交推送。
-# 每个更新的软件单独提交，提交信息为固定格式：<软件名>: Update to version <新版本号>。
-# 无新版本时不做任何改动、不产生提交。
+# 每 12 小时通过 livecheck 检查上游版本；若有更新，则更新 version / sha256，
+# 每个软件单独提交并直接推送到 main。无更新时不产生提交。
 name: auto-update
 
 on:
@@ -11,6 +9,10 @@ on:
 
 permissions:
   contents: write # 允许直接向本仓库提交
+
+concurrency:
+  group: auto-update-main
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -30,36 +32,44 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # 逐文件更新并单独提交。bump_* 每跑一次会改单个 .rb；
-      # 若有改动，用固定格式提交：<软件名>: Update to version <新版本号>
-      - name: Bump and commit casks
+      - name: Detect, bump and commit updates
         run: |
-          set -x
-          shopt -s nullglob
-          for f in Cask/*.rb; do
-            name="$(basename "$f" .rb)"
-            echo "==> Bumping cask: $name"
-            brew bump-cask-pr --write-only "$name" || true
-            if [ -n "$(git status --porcelain -- "$f")" ]; then
-              version="$(grep -m1 '^  version "' "$f" | sed -E 's/^  version "([^"]*)".*/\1/')"
-              [ -n "$version" ] || version="latest"
-              git add "$f"
-              git commit -m "$name: Update to version $version"
-            fi
-          done
+          set -euo pipefail
+          tap="${GITHUB_REPOSITORY}"
+          updates_file="$(mktemp)"
 
-      - name: Bump and commit formulae
-        run: |
-          set -x
-          shopt -s nullglob
-          for f in Formula/*.rb; do
-            name="$(basename "$f" .rb)"
-            echo "==> Bumping formula: $name"
-            brew bump-formula-pr --write-only "$name" || true
-            if [ -n "$(git status --porcelain -- "$f")" ]; then
-              version="$(grep -m1 '^  version "' "$f" | sed -E 's/^  version "([^"]*)".*/\1/')"
-              [ -n "$version" ] || version="latest"
-              git add "$f"
+          # --newer-only 仅输出确实落后于上游的软件；探测失败会让任务失败，
+          # 避免使用 `|| true` 将配置或网络错误伪装成“没有更新”。
+          brew livecheck --tap="$tap" --newer-only --json --quiet > "$updates_file"
+
+          jq -c '.[]' "$updates_file" | while IFS= read -r update; do
+            if jq -e '.cask' >/dev/null <<<"$update"; then
+              type="cask"
+              name="$(jq -r '.cask' <<<"$update")"
+              file="Casks/$name.rb"
+            elif jq -e '.formula' >/dev/null <<<"$update"; then
+              type="formula"
+              name="$(jq -r '.formula' <<<"$update")"
+              file="Formula/$name.rb"
+            else
+              echo "Invalid livecheck result: $update" >&2
+              exit 1
+            fi
+            version="$(jq -r '.version.latest' <<<"$update")"
+            if [[ -z "$version" || "$version" == "null" ]]; then
+              echo "Missing latest version in livecheck result: $update" >&2
+              exit 1
+            fi
+
+            echo "==> Bumping $type: $name ($version)"
+            if [[ "$type" == "cask" ]]; then
+              brew bump-cask-pr --write-only --version="$version" "$tap/$name"
+            else
+              brew bump-formula-pr --write-only --version="$version" "$tap/$name"
+            fi
+
+            if ! git diff --quiet -- "$file"; then
+              git add "$file"
               git commit -m "$name: Update to version $version"
             fi
           done
