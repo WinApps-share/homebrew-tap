@@ -1,0 +1,63 @@
+# 自动检查并更新本 tap 中的 formula / cask 到上游最新版本（类似 Scoop 的 Excavator）。
+# 定时（每周一）检查；若有新版本，直接在本仓库 main 分支更新 version / sha256 并提交推送。
+# 无新版本时不做任何改动、无提交。
+name: auto-update
+
+on:
+  schedule:
+    - cron: "0 8 * * 1" # 每周一 08:00 UTC（北京 16:00），可自行调整
+  workflow_dispatch: # 支持手动触发一次
+
+permissions:
+  contents: write # 允许直接向本仓库提交
+
+jobs:
+  update:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Bump all casks
+        id: bump-casks
+        run: |
+          set -x
+          # 遍历 Cask/ 目录下所有 .rb 文件（排除 README/模板之类），逐个尝试更新
+          for f in Cask/*.rb; do
+            [ -e "$f" ] || continue
+            name="$(basename "$f" .rb)"
+            echo "==> Bumping cask: $name"
+            # --write-only 只改文件不提交，由下方统一 commit/push；
+            # 失败（无更新/探测不到）不中断，交由下方判断是否有改动。
+            brew bump-cask-pr --write-only "$name" || true
+          done
+
+      - name: Bump all formulae
+        id: bump-formulae
+        run: |
+          set -x
+          for f in Formula/*.rb; do
+            [ -e "$f" ] || continue
+            name="$(basename "$f" .rb)"
+            echo "==> Bumping formula: $name"
+            brew bump-formula-pr --write-only "$name" || true
+          done
+
+      - name: Commit and push if changed
+        run: |
+          set -x
+          if git status --porcelain | grep -q .; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: auto-update formulae and casks to latest versions"
+            git push origin main
+          else
+            echo "No updates found; nothing to commit."
+          fi
