@@ -89,30 +89,18 @@ gh repo create WinApps-share/homebrew-tap --push --public --source "$(brew --rep
 
 每次 `push` / `pull_request` 都会自动运行 `brew audit` 与 `brew style`，确保 formula / cask 语法与质量没问题。PR 未通过这些检查无法合并。
 
-### 自动更新（Renovate）
+### 自动更新（auto-update.yml）
 
-通过 [Renovate](https://docs.renovatebot.com/modules/manager/homebrew/) 定时扫描 `Formula/` 与 `Cask/` 的上游最新版本：
+通过 Homebrew 官方命令自动检查上游最新版本（类似 Scoop 的 Excavator），并把更新**直接提交到 `main`**：
 
-- 配置在 `renovate.json`，默认**每周一**自动扫描（可手动 `workflow_dispatch` 触发）；
-- 检测到新版本时，Renovate 会向**本仓库**自动开一个 PR，自动更新 `version`、`url`（若含版本号）与 `sha256`；
-- 该 PR 已启用**自动合并**：当 GitHub 要求的检查（`audit.yml`）全部通过后，由 GitHub 自动合并，无需你手动点。`brew upgrade` 就能拿到新版本。
+- 配置在 `.github/workflows/auto-update.yml`，默认**每周一**自动扫描（可手动 `workflow_dispatch` 触发）；
+- 遍历 `Cask/*.rb` 用 `brew bump-cask-pr --write-only`、遍历 `Formula/*.rb` 用 `brew bump-formula-pr --write-only` 自动更新 `version`、`url` 与 `sha256`；
+- 检测到新版本时，直接在本仓库 `main` 分支提交并推送（无需 PR，无需配置任何 Secret，用内置 `GITHUB_TOKEN` 即可）；
+- 若没有任何更新，则不做改动、不产生提交，工作流正常绿灯跳过。
 
-> ⚠️ **自动合并的安全前提（务必配置）**：自动合并 ≠ 盲目合并。请到仓库 `Settings → Branches → Add branch protection rule` 为 `main` 分支启用保护：
-> - 勾选 **Require status checks to pass before merging**
-> - 把 **`audit`**（来自 `.github/workflows/audit.yml`）设为 required check
->
-> 这样只有 `brew audit` + `brew style` 都通过时才会自动合并；若检查失败或未配置保护，PR 会一直保留待你处理。自动合并不会做「能否真正编译/安装」的验证，重要软件建议仍人工抽查。不想自动合并时把 `renovate.json` 里 homebrew 包的 `automerge` 改回 `false` 即可。
+> ⚠️ 注意：自动更新只保证 `version` / `sha256` 与上游对上，**不验证能否真正编译/安装**。对重要软件仍建议提交后人工抽查。此外，「固定下载地址」（URL 不含版本号）的 cask 可能无法被自动探测到新版本，需手动更新。
 
-⚠️ **首次使用前需配置一个 Secret**：
-
-在仓库 `Settings → Secrets and variables → Actions → New repository secret` 里新增：
-
-```
-Name:  RENOVATE_TOKEN
-Value: 你的 GitHub Personal Access Token（fine-grained PAT，权限勾选该仓库的 Contents: Read & Write）
-```
-
-> 说明：Renovate 需要一个有写权限的 token 才能向本仓库创建 PR。可用你自己的 PAT；如需仅用于 CI 的机器人，可另建一个 GitHub App 或机器人账号。
+> 提示：本方案取代了原有的 Renovate（`.github/workflows/renovate.yml` 与 `renovate.json`），那两个文件已移除。
 
 ## 常见问题
 
