@@ -1,11 +1,12 @@
 # 自动检查并更新本 tap 中的 formula / cask 到上游最新版本（类似 Scoop 的 Excavator）。
-# 定时（每周一）检查；若有新版本，直接在本仓库 main 分支更新 version / sha256 并提交推送。
-# 无新版本时不做任何改动、无提交。
+# 每 12 小时检查一次；若有新版本，直接在本仓库 main 分支更新 version / sha256 并提交推送。
+# 每个更新的软件单独提交，提交信息为固定格式：<软件名>: Update to version <新版本号>。
+# 无新版本时不做任何改动、不产生提交。
 name: auto-update
 
 on:
   schedule:
-    - cron: "0 8 * * 1" # 每周一 08:00 UTC（北京 16:00），可自行调整
+    - cron: "0 */12 * * *" # 每 12 小时一次（整点）
   workflow_dispatch: # 支持手动触发一次
 
 permissions:
@@ -24,40 +25,50 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
-      - name: Bump all casks
-        id: bump-casks
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # 逐文件更新并单独提交。bump_* 每跑一次会改单个 .rb；
+      # 若有改动，用固定格式提交：<软件名>: Update to version <新版本号>
+      - name: Bump and commit casks
         run: |
           set -x
-          # 遍历 Cask/ 目录下所有 .rb 文件（排除 README/模板之类），逐个尝试更新
+          shopt -s nullglob
           for f in Cask/*.rb; do
-            [ -e "$f" ] || continue
             name="$(basename "$f" .rb)"
             echo "==> Bumping cask: $name"
-            # --write-only 只改文件不提交，由下方统一 commit/push；
-            # 失败（无更新/探测不到）不中断，交由下方判断是否有改动。
             brew bump-cask-pr --write-only "$name" || true
+            if [ -n "$(git status --porcelain -- "$f")" ]; then
+              version="$(grep -m1 '^  version "' "$f" | sed -E 's/^  version "([^"]*)".*/\1/')"
+              [ -n "$version" ] || version="latest"
+              git add "$f"
+              git commit -m "$name: Update to version $version"
+            fi
           done
 
-      - name: Bump all formulae
-        id: bump-formulae
+      - name: Bump and commit formulae
         run: |
           set -x
+          shopt -s nullglob
           for f in Formula/*.rb; do
-            [ -e "$f" ] || continue
             name="$(basename "$f" .rb)"
             echo "==> Bumping formula: $name"
             brew bump-formula-pr --write-only "$name" || true
+            if [ -n "$(git status --porcelain -- "$f")" ]; then
+              version="$(grep -m1 '^  version "' "$f" | sed -E 's/^  version "([^"]*)".*/\1/')"
+              [ -n "$version" ] || version="latest"
+              git add "$f"
+              git commit -m "$name: Update to version $version"
+            fi
           done
 
-      - name: Commit and push if changed
+      - name: Push if changed
         run: |
           set -x
-          if git status --porcelain | grep -q .; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: auto-update formulae and casks to latest versions"
+          if git log origin/main..HEAD | grep -q .; then
             git push origin main
           else
-            echo "No updates found; nothing to commit."
+            echo "No updates found; nothing to commit or push."
           fi
