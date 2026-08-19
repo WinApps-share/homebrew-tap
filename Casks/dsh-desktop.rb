@@ -16,7 +16,5 @@ cask "dsh-desktop" do
 
   app "DSH Desktop.app"
 
-  zap trash: [
-    "~/Library/Application Support/DSH Desktop"
-  ]
+  zap trash: "~/Library/Application Support/DSH Desktop"
 end
