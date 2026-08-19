@@ -79,6 +79,29 @@ brew untap WinApps-share/tap
 
 ## 本地开发与测试
 
+仓库提供了一个维护脚本，把检查更新、本地更新和提交前校验统一到同一入口：
+
+```bash
+# 检查整个 tap，或只检查指定软件
+script/tap check
+script/tap check obs wetype
+
+# 探测新版本并在本地改写 version / sha256（不会提交或推送）
+script/tap update
+script/tap update obs
+
+# 默认只校验相对 origin/main 有变化、未提交或新建的清单
+script/tap validate
+
+# 校验全部清单；或只做 Ruby 语法和 brew style 的快速校验
+script/tap validate --all
+script/tap validate --quick
+```
+
+`update` 在任何待更新清单已有本地修改时会先退出，避免覆盖手工编辑；完成后可查看 diff，再运行 `script/tap validate`。`validate` 的完整模式与 CI 一致，会执行严格在线审计，因此需要网络；`--quick` 不执行在线审计。校验遇到错误时会继续检查剩余清单，最后汇总失败数量并返回非零状态。
+
+脚本需要 Homebrew 通过 `WinApps-share/tap` 加载当前工作区。可以直接在 Homebrew 管理的 tap 仓库中工作，也可以按下文把其他位置的克隆链接过去。
+
 Homebrew 的审计命令按 tap 名称加载软件，因此最省事的开发方式是直接在 Homebrew 管理的 tap 仓库中修改：
 
 ```bash

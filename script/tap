@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+TAP_NAME="${TAP_NAME:-WinApps-share/tap}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/homebrew-tap.XXXXXX")"
+readonly TAP_NAME REPO_ROOT WORK_DIR
+
+cleanup() {
+  rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
+
+usage() {
+  cat <<'EOF'
+Usage:
+  script/tap check [name ...]
+  script/tap update [name ...]
+  script/tap validate [--all] [--quick] [name ...]
+
+Commands:
+  check       Check upstream for newer versions. Checks the whole tap by default.
+  update      Update version and SHA256 locally, without committing. Refuses to
+              touch a manifest that already has local changes.
+  validate    Validate changed manifests by default. --all validates the whole tap;
+              --quick skips the strict online audit.
+
+Names can be tokens (for example "obs"), manifest paths, or qualified names such
+as "cask:obs". Set TAP_NAME to override the default tap name.
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+need_command() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+ensure_tap_linked() {
+  local tap_root
+
+  tap_root="$(brew --repository "$TAP_NAME" 2>/dev/null || true)"
+  if [[ -z "$tap_root" || ! -d "$tap_root" ]]; then
+    die "$TAP_NAME is not tapped; follow the local symlink setup in README.md first"
+  fi
+  if [[ "$(cd "$tap_root" && pwd -P)" != "$REPO_ROOT" ]]; then
+    die "Homebrew loads $TAP_NAME from $tap_root, not this working tree; follow the local symlink setup in README.md"
+  fi
+}
+
+# Print "type<TAB>token<TAB>path" for a user-supplied name.
+resolve_manifest() {
+  local input="$1" type="" token="" path=""
+
+  case "$input" in
+    cask:*)
+      type="cask"
+      token="${input#cask:}"
+      path="Casks/$token.rb"
+      ;;
+    formula:*)
+      type="formula"
+      token="${input#formula:}"
+      path="Formula/$token.rb"
+      ;;
+    Casks/*.rb)
+      type="cask"
+      token="$(basename "$input" .rb)"
+      path="$input"
+      ;;
+    Formula/*.rb)
+      type="formula"
+      token="$(basename "$input" .rb)"
+      path="$input"
+      ;;
+    *)
+      token="${input%.rb}"
+      if [[ -f "$REPO_ROOT/Casks/$token.rb" && -f "$REPO_ROOT/Formula/$token.rb" ]]; then
+        die "ambiguous name '$input'; use cask:$token or formula:$token"
+      elif [[ -f "$REPO_ROOT/Casks/$token.rb" ]]; then
+        type="cask"
+        path="Casks/$token.rb"
+      elif [[ -f "$REPO_ROOT/Formula/$token.rb" ]]; then
+        type="formula"
+        path="Formula/$token.rb"
+      else
+        die "manifest not found: $input"
+      fi
+      ;;
+  esac
+
+  [[ -f "$REPO_ROOT/$path" ]] || die "manifest not found: $path"
+  printf '%s\t%s\t%s\n' "$type" "$token" "$path"
+}
+
+write_requested_manifests() {
+  local output="$1"
+  shift
+  : >"$output"
+  while [[ "$#" -gt 0 ]]; do
+    resolve_manifest "$1" >>"$output"
+    shift
+  done
+  sort -u -o "$output" "$output"
+}
+
+write_all_manifests() {
+  local output="$1" path type token
+  : >"$output"
+  while IFS= read -r path; do
+    [[ -n "$path" ]] || continue
+    case "$path" in
+      Casks/*.rb) type="cask" ;;
+      Formula/*.rb) type="formula" ;;
+      *) continue ;;
+    esac
+    token="$(basename "$path" .rb)"
+    printf '%s\t%s\t%s\n' "$type" "$token" "$path" >>"$output"
+  done < <(git -C "$REPO_ROOT" ls-files 'Casks/*.rb' 'Formula/*.rb')
+}
+
+write_changed_manifests() {
+  local output="$1" files base path type token
+  files="$WORK_DIR/changed-files"
+  : >"$files"
+
+  if git -C "$REPO_ROOT" rev-parse --verify origin/main >/dev/null 2>&1; then
+    base="$(git -C "$REPO_ROOT" merge-base HEAD origin/main)"
+    git -C "$REPO_ROOT" diff --name-only --diff-filter=ACMRT "$base"...HEAD -- Casks Formula >>"$files"
+  elif git -C "$REPO_ROOT" rev-parse --verify HEAD^ >/dev/null 2>&1; then
+    git -C "$REPO_ROOT" diff --name-only --diff-filter=ACMRT HEAD^ HEAD -- Casks Formula >>"$files"
+  fi
+  {
+    git -C "$REPO_ROOT" diff --name-only --diff-filter=ACMRT -- Casks Formula
+    git -C "$REPO_ROOT" diff --cached --name-only --diff-filter=ACMRT -- Casks Formula
+    git -C "$REPO_ROOT" ls-files --others --exclude-standard -- Casks Formula
+  } >>"$files"
+
+  : >"$output"
+  sort -u "$files" | while IFS= read -r path; do
+    [[ -f "$REPO_ROOT/$path" ]] || continue
+    case "$path" in
+      Casks/*.rb) type="cask" ;;
+      Formula/*.rb) type="formula" ;;
+      *) continue ;;
+    esac
+    token="$(basename "$path" .rb)"
+    printf '%s\t%s\t%s\n' "$type" "$token" "$path"
+  done >"$output"
+}
+
+livecheck_args() {
+  local manifests="$1" type token path
+  while IFS=$'\t' read -r type token path; do
+    [[ -n "$token" ]] || continue
+    printf '%s\n' "$TAP_NAME/$token"
+  done <"$manifests"
+}
+
+cmd_check() {
+  local manifests
+  manifests="$WORK_DIR/check-manifests"
+
+  if [[ "$#" -eq 0 ]]; then
+    echo "==> Checking all manifests for updates"
+    brew livecheck --tap="$TAP_NAME" --newer-only
+  else
+    write_requested_manifests "$manifests" "$@"
+    local targets=()
+    while IFS= read -r target; do targets+=("$target"); done < <(livecheck_args "$manifests")
+    echo "==> Checking ${#targets[@]} manifest(s) for updates"
+    brew livecheck --newer-only "${targets[@]}"
+  fi
+}
+
+cmd_update() {
+  local manifests updates type token path version target status
+  manifests="$WORK_DIR/update-manifests"
+  updates="$WORK_DIR/updates.json"
+
+  if [[ "$#" -eq 0 ]]; then
+    brew livecheck --tap="$TAP_NAME" --newer-only --json --quiet >"$updates"
+  else
+    write_requested_manifests "$manifests" "$@"
+    local targets=()
+    while IFS= read -r target; do targets+=("$target"); done < <(livecheck_args "$manifests")
+    brew livecheck --newer-only --json --quiet "${targets[@]}" >"$updates"
+  fi
+
+  jq -e 'all(.[]; ((.cask // .formula) | type == "string") and (.version.latest | type == "string" and length > 0))' \
+    "$updates" >/dev/null || die "livecheck returned an invalid update result"
+  jq -r '.[] | if .cask then ["cask", .cask, .version.latest] else ["formula", .formula, .version.latest] end | @tsv' \
+    "$updates" >"$manifests"
+  if [[ ! -s "$manifests" ]]; then
+    echo "No updates found."
+    return
+  fi
+
+  # Check every target before changing any of them, so this command cannot
+  # partially update the tree and then fail on an already-edited manifest.
+  while IFS=$'\t' read -r type token version; do
+    [[ "$type" == "cask" ]] && path="Casks/$token.rb" || path="Formula/$token.rb"
+    [[ -f "$REPO_ROOT/$path" ]] || die "livecheck returned an unknown manifest: $path"
+    status="$(git -C "$REPO_ROOT" status --porcelain -- "$path")"
+    [[ -z "$status" ]] || die "$path already has local changes; commit or stash them before updating"
+  done <"$manifests"
+
+  while IFS=$'\t' read -r type token version; do
+    target="$TAP_NAME/$token"
+    echo "==> Updating $type $token to $version"
+    if [[ "$type" == "cask" ]]; then
+      brew bump-cask-pr --write-only --version="$version" "$target"
+    else
+      brew bump-formula-pr --write-only --version="$version" "$target"
+    fi
+  done <"$manifests"
+
+  echo
+  git -C "$REPO_ROOT" status --short -- Casks Formula
+  echo "Run 'script/tap validate' before committing."
+}
+
+cmd_validate() {
+  local all=false quick=false manifests type token path target
+  local count=0 failed_count=0 manifest_failed=false
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --all) all=true; shift ;;
+      --quick) quick=true; shift ;;
+      -h|--help) usage; return ;;
+      --*) die "unknown validate option: $1" ;;
+      *) break ;;
+    esac
+  done
+  [[ "$all" == false || "$#" -eq 0 ]] || die "--all cannot be combined with manifest names"
+
+  manifests="$WORK_DIR/validate-manifests"
+  if [[ "$#" -gt 0 ]]; then
+    write_requested_manifests "$manifests" "$@"
+  elif [[ "$all" == true ]]; then
+    write_all_manifests "$manifests"
+  else
+    write_changed_manifests "$manifests"
+  fi
+
+  if [[ ! -s "$manifests" ]]; then
+    echo "No changed formulae or casks to validate."
+    return
+  fi
+
+  while IFS=$'\t' read -r type token path; do
+    target="$TAP_NAME/$token"
+    echo "==> Validating $type: $target"
+    manifest_failed=false
+
+    if ! ruby -c "$REPO_ROOT/$path"; then
+      echo "FAILED: Ruby syntax ($path)" >&2
+      manifest_failed=true
+    fi
+    if ! brew style "--$type" "$target"; then
+      echo "FAILED: brew style ($target)" >&2
+      manifest_failed=true
+    fi
+    if [[ "$quick" == false ]]; then
+      if ! brew audit --strict --online "--$type" "$target"; then
+        echo "FAILED: brew audit ($target)" >&2
+        manifest_failed=true
+      fi
+    fi
+
+    if [[ "$manifest_failed" == true ]]; then
+      failed_count=$((failed_count + 1))
+    fi
+    count=$((count + 1))
+  done <"$manifests"
+
+  if [[ "$failed_count" -gt 0 ]]; then
+    echo "Validation failed for $failed_count of $count manifest(s)." >&2
+    return 1
+  fi
+  echo "Validated $count manifest(s); all checks passed."
+}
+
+main() {
+  need_command brew
+  need_command git
+  need_command ruby
+  cd "$REPO_ROOT"
+
+  case "${1:-}" in
+    check)
+      shift
+      ensure_tap_linked
+      cmd_check "$@"
+      ;;
+    update)
+      shift
+      need_command jq
+      ensure_tap_linked
+      cmd_update "$@"
+      ;;
+    validate)
+      shift
+      ensure_tap_linked
+      cmd_validate "$@"
+      ;;
+    -h|--help|help) usage ;;
+    "") usage; exit 1 ;;
+    *) die "unknown command: $1 (try: script/tap --help)" ;;
+  esac
+}
+
+main "$@"
