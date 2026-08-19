@@ -1,4 +1,4 @@
-# 官方 brew tap-new 生成的审计工作流：提交/PR 时自动检查 formula 与 cask 的语法与质量。
+# 提交/PR 时只审计本次变更的 formula 与 cask。
 name: brew audit
 
 on:
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -30,10 +32,40 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: brew install-bundler-gems
 
-      - name: Run brew audit
+      - name: Audit changed formulae and casks
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TAP: ${{ github.repository }}
         run: |
-          brew audit --strict --online --tap="${{ github.repository }}"
+          set -euo pipefail
 
-      - name: Run brew style
-        run: |
-          brew style "${{ github.repository }}"
+          # push 检查该次 push 的净变更；PR 检查 base 与 head 之间的净变更。
+          # 已删除的清单无法交给 Homebrew 审计，因此跳过。
+          changed_count=0
+          while IFS= read -r file; do
+            [[ -f "$file" ]] || continue
+
+            case "$file" in
+              Formula/*.rb)
+                type="formula"
+                ;;
+              Casks/*.rb)
+                type="cask"
+                ;;
+              *)
+                continue
+                ;;
+            esac
+
+            token="$(basename "$file" .rb)"
+            name="$TAP/$token"
+            echo "==> Auditing changed $type: $name"
+            brew audit --strict --online "--$type" "$name"
+            brew style "--$type" "$name"
+            changed_count=$((changed_count + 1))
+          done < <(git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$HEAD_SHA" -- Formula Casks)
+
+          if [[ "$changed_count" -eq 0 ]]; then
+            echo "No changed formulae or casks to audit."
+          fi

@@ -26,6 +26,9 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          # setup-homebrew 会重新布置 tap 工作区，因此需要显式持久 push 凭据。
+          token: ${{ github.token }}
 
       - name: Configure git
         run: |

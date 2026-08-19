@@ -73,7 +73,7 @@ brew untap WinApps-share/tap
 ├── Formula/            # Formula：通常从源码构建的命令行工具
 ├── Casks/              # Cask：预编译的 macOS 应用或安装包
 └── .github/workflows/
-    ├── audit.yml       # push/PR 时执行审计与格式检查
+    ├── audit.yml       # push/PR 时检查本次变更的清单
     └── auto-update.yml # 每 12 小时检查并提交上游版本更新
 ```
 
@@ -183,10 +183,12 @@ brew create --cask https://example.com/MyApp-1.0.0.dmg \
 
 ### `audit.yml`
 
-每次向 `main` push 或提交 pull request 时运行：
+每次向 `main` push 或提交 pull request 时，只对本次变更且仍然存在的 Formula/Cask 运行：
 
-- `brew audit --strict --online --tap="WinApps-share/tap"`
-- `brew style "WinApps-share/tap"`
+- `brew audit --strict --online <formula-or-cask>`
+- `brew style <formula-or-cask>`
+
+删除清单或仅修改文档时不会执行全量审计。
 
 建议在 GitHub 分支保护中把该任务设为合并前必需检查；仅有工作流文件并不会自动阻止失败的 PR 合并。
 
@@ -199,7 +201,7 @@ brew create --cask https://example.com/MyApp-1.0.0.dmg \
 3. 自动计算并写入新 SHA256；
 4. 每个软件单独提交，最后推送到 `main`。
 
-该工作流使用仓库内置的 `GITHUB_TOKEN`，仓库的 Actions 设置必须允许该 token 写入 contents。如果 `main` 禁止 GitHub Actions 直接推送，需要为机器人配置相应的分支规则例外，或将流程改为创建 PR。
+该工作流将仓库内置的 `GITHUB_TOKEN` 传给 `setup-homebrew` 作为 Git push 凭据，仓库的 Actions 设置必须允许该 token 写入 contents。如果 `main` 禁止 GitHub Actions 直接推送，需要为机器人配置相应的分支规则例外，或将流程改为创建 PR。
 
 自动更新会执行 Homebrew 自带的审计，但它不能替代真实安装测试。上游若改变 DMG 内的应用名称、安装结构或系统要求，仍需人工修改 Cask。
 
