@@ -41,9 +41,18 @@ jobs:
           tap="${GITHUB_REPOSITORY}"
           updates_file="$(mktemp)"
 
+          # Homebrew 6.0+ requires explicit trust before loading formulae and
+          # casks from a non-official tap. This workflow owns and updates the
+          # checked-out tap, so trusting the whole tap is intentional here.
+          brew trust "$tap"
+
           # --newer-only 仅输出确实落后于上游的软件；探测失败会让任务失败，
-          # 避免使用 `|| true` 将配置或网络错误伪装成“没有更新”。
-          brew livecheck --tap="$tap" --newer-only --json --quiet > "$updates_file"
+          # 避免将配置或网络错误伪装成“没有更新”，并在失败时打印详情。
+          if ! brew livecheck --tap="$tap" --newer-only --json > "$updates_file"; then
+            echo "brew livecheck failed; results:" >&2
+            jq . "$updates_file" >&2 || sed -n '1,240p' "$updates_file" >&2
+            exit 1
+          fi
 
           jq -c '.[]' "$updates_file" | while IFS= read -r update; do
             if jq -e '.cask' >/dev/null <<<"$update"; then
