@@ -36,7 +36,6 @@ cask "ab-download-manager" do
       "~/Library/Preferences/com.abdownloadmanager.desktop.desktop.plist",
     ]
   end
-
   on_linux do
     version "1.10.1"
     sha256 :no_check
