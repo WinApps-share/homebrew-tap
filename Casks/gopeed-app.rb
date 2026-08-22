@@ -1,4 +1,4 @@
-cask "gopeed" do
+cask "gopeed-app" do
   arch arm: "arm64", intel: "amd64"
 
   version "1.9.3"
