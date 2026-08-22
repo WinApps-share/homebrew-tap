@@ -21,5 +21,10 @@ cask "gui-for-clash" do
 
   app "GUI.for.Clash.app"
 
-  zap trash: "~/Library/Application Support/GUI.for.Clash"
+  zap trash: [
+    "~/Library/Application Support/GUI.for.Clash",
+    "~/Library/Caches/com.wails.GUI.for.Clash",
+    "~/Library/Preferences/com.wails.GUI.for.Clash.plist",
+    "~/Library/WebKit/com.wails.GUI.for.Clash",
+  ]
 end
