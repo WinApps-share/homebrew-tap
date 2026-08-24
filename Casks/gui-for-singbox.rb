@@ -21,6 +21,10 @@ cask "gui-for-singbox" do
 
   app "GUI.for.SingBox.app"
 
+  postflight do
+    system "xattr", "-dr", "com.apple.quarantine", "#{appdir}/GUI.for.SingBox.app"
+  end
+
   zap trash: [
     "~/Library/Application Support/GUI.for.SingBox",
     "~/Library/Caches/com.wails.GUI.for.SingBox",
