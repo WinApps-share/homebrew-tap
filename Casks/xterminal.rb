@@ -31,7 +31,7 @@ cask "xterminal" do
     "~/Library/Caches/xterminal-updater",
     "~/Library/HTTPStorages/cn.xterminal.www",
     "~/Library/Logs/xterminal",
-    "~/Library/Preferences/ByHost/cn.xterminal.www.ShipIt.32C71AA3-0CFC-5D9F-8204-620ECACFC378.plist",
+    "~/Library/Preferences/ByHost/cn.xterminal.www.ShipIt.*.plist",
     "~/Library/Preferences/cn.xterminal.www.plist",
   ]
 end
