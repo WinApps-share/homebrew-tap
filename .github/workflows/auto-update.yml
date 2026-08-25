@@ -39,52 +39,98 @@ jobs:
         run: |
           set -euo pipefail
           tap="${GITHUB_REPOSITORY}"
-          updates_file="$(mktemp)"
+          livecheck_output="$(mktemp)"
+          livecheck_error="$(mktemp)"
+          failures_file="$(mktemp)"
+          trap 'rm -f "$livecheck_output" "$livecheck_error" "$failures_file"' EXIT
+
+          checked_count=0
+          updated_count=0
+          failure_count=0
 
           # Homebrew 6.0+ requires explicit trust before loading formulae and
           # casks from a non-official tap. This workflow owns and updates the
           # checked-out tap, so trusting the whole tap is intentional here.
           brew trust "$tap"
 
-          # --newer-only 仅输出确实落后于上游的软件；探测失败会让任务失败，
-          # 避免将配置或网络错误伪装成“没有更新”，并在失败时打印详情。
-          if ! brew livecheck --tap="$tap" --newer-only --json > "$updates_file"; then
-            echo "brew livecheck failed; results:" >&2
-            jq . "$updates_file" >&2 || sed -n '1,240p' "$updates_file" >&2
-            exit 1
-          fi
+          # 逐个检查，避免某个上游超时或配置错误中断整批更新。
+          # 失败项会在日志和 job summary 中列出，但不阻止其他项目提交。
+          shopt -s nullglob
+          for file in Formula/*.rb Casks/*.rb; do
+            case "$file" in
+              Formula/*.rb) type="formula" ;;
+              Casks/*.rb) type="cask" ;;
+            esac
+            name="$(basename "$file" .rb)"
+            checked_count=$((checked_count + 1))
+            : > "$livecheck_output"
+            : > "$livecheck_error"
 
-          jq -c '.[]' "$updates_file" | while IFS= read -r update; do
-            if jq -e '.cask' >/dev/null <<<"$update"; then
-              type="cask"
-              name="$(jq -r '.cask' <<<"$update")"
-              file="Casks/$name.rb"
-            elif jq -e '.formula' >/dev/null <<<"$update"; then
-              type="formula"
-              name="$(jq -r '.formula' <<<"$update")"
-              file="Formula/$name.rb"
-            else
-              echo "Invalid livecheck result: $update" >&2
-              exit 1
+            echo "==> Checking $type: $name"
+            if ! brew livecheck --quiet --newer-only --json "--$type" "$tap/$name" \
+              >"$livecheck_output" 2>"$livecheck_error"; then
+              echo "WARNING: livecheck failed for $type $name" >&2
+              sed -n '1,120p' "$livecheck_error" >&2
+              sed -n '1,120p' "$livecheck_output" >&2
+              printf '%s\n' "- livecheck: $type \`$name\`" >> "$failures_file"
+              failure_count=$((failure_count + 1))
+              continue
             fi
-            version="$(jq -r '.version.latest' <<<"$update")"
-            if [[ -z "$version" || "$version" == "null" ]]; then
-              echo "Missing latest version in livecheck result: $update" >&2
-              exit 1
+
+            if ! jq -e 'type == "array"' "$livecheck_output" >/dev/null; then
+              echo "WARNING: invalid livecheck JSON for $type $name" >&2
+              sed -n '1,120p' "$livecheck_output" >&2
+              printf '%s\n' "- invalid JSON: $type \`$name\`" >> "$failures_file"
+              failure_count=$((failure_count + 1))
+              continue
+            fi
+
+            update="$(jq -c '.[0] // empty' "$livecheck_output")"
+            [[ -n "$update" ]] || continue
+            version="$(jq -r '.version.latest // empty' <<<"$update")"
+            if [[ -z "$version" ]]; then
+              echo "WARNING: latest version missing for $type $name: $update" >&2
+              printf '%s\n' "- missing version: $type \`$name\`" >> "$failures_file"
+              failure_count=$((failure_count + 1))
+              continue
             fi
 
             echo "==> Bumping $type: $name ($version)"
             if [[ "$type" == "cask" ]]; then
-              brew bump-cask-pr --write-only --version="$version" "$tap/$name"
+              if ! brew bump-cask-pr --write-only --version="$version" "$tap/$name"; then
+                git restore -- "$file"
+                printf '%s\n' "- bump: $type \`$name\` ($version)" >> "$failures_file"
+                failure_count=$((failure_count + 1))
+                continue
+              fi
             else
-              brew bump-formula-pr --write-only --version="$version" "$tap/$name"
+              if ! brew bump-formula-pr --write-only --version="$version" "$tap/$name"; then
+                git restore -- "$file"
+                printf '%s\n' "- bump: $type \`$name\` ($version)" >> "$failures_file"
+                failure_count=$((failure_count + 1))
+                continue
+              fi
             fi
 
             if ! git diff --quiet -- "$file"; then
               git add "$file"
               git commit -m "$name: Update to version $version"
+              updated_count=$((updated_count + 1))
             fi
           done
+
+          {
+            echo "## Auto-update summary"
+            echo
+            echo "- Checked: $checked_count"
+            echo "- Updated: $updated_count"
+            echo "- Failed: $failure_count"
+            if [[ "$failure_count" -gt 0 ]]; then
+              echo
+              echo "### Failed items"
+              cat "$failures_file"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Push if changed
         run: |
