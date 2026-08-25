@@ -20,9 +20,9 @@ cask "rubick" do
   app "rubick.app"
 
   zap trash: [
-    "~/Library/Application Support/CrashReporter/rubick_32C71AA3-0CFC-5D9F-8204-620ECACFC378.plist",
+    "~/Library/Application Support/CrashReporter/rubick_*.plist",
     "~/Library/Application Support/rubick",
-    "~/Library/Logs/DiagnosticReports/rubick-2026-08-23-204253.ips",
+    "~/Library/Logs/DiagnosticReports/rubick*.ips",
     "~/Library/Preferences/com.muwoo.rubick.plist",
     "~/Library/Services/rubick.workflow",
   ]
