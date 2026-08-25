@@ -22,7 +22,7 @@ cask "gopeed-app" do
 
   zap trash: [
     "~/Library/Application Support/com.gopeed.gopeed",
-    "~/Library/Application Support/CrashReporter/Gopeed_32C71AA3-0CFC-5D9F-8204-620ECACFC378.plist",
+    "~/Library/Application Support/CrashReporter/Gopeed_*.plist",
     "~/Library/Preferences/com.gopeed.gopeed.plist",
   ]
 end
