@@ -1,20 +1,29 @@
 cask "vscode" do
-  arch arm: "darwin-arm64", intel: "darwin"
+  arch arm: "arm64", intel: "x64"
 
-  version "1.134.0"
-  sha256 arm:   "6df181646588f0132339d19f5bdfb20bd0d6db05e5801061f12e0dc93c85fa70",
-         intel: "406c77667b14b4ee7252be317fb14973cca4ba587f96536bebec36b8c3ffdfb4"
+  version "1.134.0,110a328ea54b42367b803ec53ee0bf52ef26b419"
+  sha256 arm:   "eb57a95b28b43e3a478bac1898db4f0790fef2b3a8231eb5463c47898a3e1000",
+         intel: "103e89e5af43c9bb55657065df2f4bb630503adaca344d5c328148dc0bd00d22"
 
-  url "https://update.code.visualstudio.com/#{version}/#{arch}/stable"
+  url "https://vscode.download.prss.microsoft.com/dbazure/download/stable/#{version.csv.second}/VSCode-darwin-#{arch}.dmg"
   name "Microsoft Visual Studio Code"
   name "VS Code"
   desc "Open-source code editor"
   homepage "https://code.visualstudio.com/"
 
   livecheck do
-    url "https://update.code.visualstudio.com/api/update/#{arch}/stable/latest"
+    url "https://code.visualstudio.com/sha?build=stable"
     strategy :json do |json|
-      json["productVersion"]
+      item = json["products"]&.find do |item|
+        item.dig("platform", "os") == "darwin-arm64-dmg"
+      end
+      next if item.blank?
+
+      product_version = item["productVersion"]
+      version = item["version"]
+      next if product_version.blank? || version.blank?
+
+      "#{product_version},#{version}"
     end
   end
 
