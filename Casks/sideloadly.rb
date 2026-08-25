@@ -17,7 +17,7 @@ cask "sideloadly" do
   app "Sideloadly.app"
 
   zap trash: [
-    "~/Library/Application Support/CrashReporter/Sideloadly_32C71AA3-0CFC-5D9F-8204-620ECACFC378.plist",
+    "~/Library/Application Support/CrashReporter/Sideloadly_*.plist",
     "~/Library/LaunchAgents/io.sideloadly.daemon.plist",
     "~/Library/Preferences/io.sideloadly.sideloadly.plist",
   ]
