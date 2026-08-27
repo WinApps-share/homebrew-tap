@@ -1,9 +1,9 @@
 cask "rapidefi" do
   arch arm: "arm64", intel: "x64"
 
-  version "5.4.0"
-  sha256 arm:   "1526954e513890981ab4a279bebb2a558990a8d509461a8b8ec56b60ddd1517b",
-         intel: "5a91917530888ce0330b90e04c071aedfaf04d53beba78ac3e8378f1b735f811"
+  version "5.5.0"
+  sha256 arm:   "e8053d3c7cc50cac0ec404adf6f36b3ad6c14976fc1c6f767d3d3d8e76724246",
+         intel: "5c1a0a780cfa822b183530c21ce507e6ed6679921aaf2eef74c11b92add64c12"
 
   url "https://github.com/JeoJay127/RapidEFI-Tool/releases/download/v#{version}/RapidEFI-macOS-#{arch}.zip"
   name "RapidEFI"
