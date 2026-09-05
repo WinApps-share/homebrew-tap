@@ -5,8 +5,7 @@ cask "cherry-studio" do
   sha256 arm:   "d1cfadb5bd4087b2ae64b922d791fab538b3de40f448e8c3a47dce2c1fc38da8",
          intel: "df20976762cd514a7e71e6b1167ecef643a527995c2218c65ee97fa178db4efb"
 
-  url "https://github.com/CherryHQ/cherry-studio/releases/download/v#{version}/Cherry-Studio-#{version}-mac-#{arch}.dmg",
-      verified: "github.com/CherryHQ/cherry-studio/"
+  url "https://github.com/CherryHQ/cherry-studio/releases/download/v#{version}/Cherry-Studio-#{version}-mac-#{arch}.dmg"
   name "Cherry Studio"
   desc "Desktop client that supports multiple LLM providers"
   homepage "https://www.cherry-ai.com/"
