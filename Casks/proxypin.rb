@@ -12,8 +12,7 @@ cask "proxypin" do
     strategy :github_latest
   end
 
-  # DMG 中的 Info.plist 声明 LSMinimumSystemVersion 为 10.15（Catalina）
-  depends_on macos: :catalina
+  depends_on :macos
 
   app "ProxyPin.app"
 
