@@ -1,9 +1,8 @@
 cask "vmware-fusion" do
-  version "26H1,25388279"
-  sha256 "c1d373aa21be25674e3ecc518819e255785dea9d456d8747bcb0a2a59244bdf6"
+  version "26H1u1,25689522"
+  sha256 "df1911f8de651818a43c20ca1054403da7e39534f15a2e0e0f9d41ffcf728ab8"
 
-  url "https://archive.org/download/vmwareworkstationarchive/Fusion/#{version.csv.first}/VMware-Fusion-#{version.csv.first}-#{version.csv.second}_universal.dmg",
-      verified: "archive.org/download/vmwareworkstationarchive/Fusion/"
+  url "https://archive.org/download/vmwareworkstationarchive/Fusion/26H1/VMware-Fusion-#{version.csv.first}-#{version.csv.second}_universal.dmg"
   name "VMware Fusion"
   desc "Create, manage, and run virtual machines"
   homepage "https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion"
@@ -42,11 +41,11 @@ cask "vmware-fusion" do
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmware-vmx-debug"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmware-vmx-stats"
 
-  postflight do
-    system_command "#{appdir}/VMware Fusion.app/Contents/Library/Initialize VMware Fusion.tool",
-                   args:         ["set"],
-                   sudo:         true,
-                   sudo_as_root: true
+  postflight_steps do
+    run "VMware Fusion.app/Contents/Library/Initialize VMware Fusion.tool",
+        args: ["set"],
+        base: :appdir,
+        sudo: true
   end
 
   uninstall_preflight_steps do
