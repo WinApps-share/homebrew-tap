@@ -1,9 +1,9 @@
 cask "cherry-studio" do
   arch arm: "arm64", intel: "x64"
 
-  version "2.0.12"
-  sha256 arm:   "d1cfadb5bd4087b2ae64b922d791fab538b3de40f448e8c3a47dce2c1fc38da8",
-         intel: "df20976762cd514a7e71e6b1167ecef643a527995c2218c65ee97fa178db4efb"
+  version "2.0.13"
+  sha256 arm:   "a9d1486875ddb188524e51915f5f1f7e30a5a9915000580b88aca529f2d8f09b",
+         intel: "4b16bc394cc6cebb94a7a2a7d4e85c071808d261f0e46fe07ad71b03b758f716"
 
   url "https://github.com/CherryHQ/cherry-studio/releases/download/v#{version}/Cherry-Studio-#{version}-mac-#{arch}.dmg"
   name "Cherry Studio"
