@@ -1,6 +1,6 @@
 cask "cxasm-ndd" do
-  version "3.8.3"
-  sha256 "6ef1c4f91a13c8fcaec21d0be47cce788019e57b4bd52b37f053df9dce0a494a"
+  version "3.9.0"
+  sha256 "0bae362fc6d6c12629245130ec66221b3e626c634f5826f85c005acd81f5de83"
 
   url "https://gitee.com/cxasm/notepad--/releases/download/v#{version}/Notepad--v#{version}-mac_arm64_12.3.dmg"
   name "Notepad--"
