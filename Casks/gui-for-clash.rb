@@ -15,11 +15,15 @@ cask "gui-for-clash" do
     strategy :github_latest
   end
 
-  # Info.plist 声明 LSMinimumSystemVersion 为 10.13，但 arm64 构建的 Mach-O 实际 minos 为 11.0（Big Sur），
-  # 因此按两者中较严格的取 Big Sur。
-  depends_on macos: :big_sur
+  depends_on :macos
 
   app "GUI.for.Clash.app"
+
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "GUI.for.Clash.app"],
+        base: :appdir
+  end
 
   zap trash: [
     "~/Library/Application Support/GUI.for.Clash",
