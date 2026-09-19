@@ -1,9 +1,9 @@
 cask "brave-browser" do
   arch arm: "arm64", intel: "x64"
 
-  version "1.95.102"
-  sha256 arm:   "97eb5f8a17d1a0e191d3a47059e79b9fa47d3930035d10a23ad086df9e4ab1fb",
-         intel: "370a711762fbe157630357a7c101e94923d2e0599a20e6f3fcda1013f8db791d"
+  version "1.95.104"
+  sha256 arm:   "f6823d53b3e9a287b8f8830b728ba9b34fe2d4a9f6ee4e05b3bcd4a21ee25eaf",
+         intel: "39607fefc2e7c1ab690494f38f98abe95154f354968acf1cfe5f6a259f0e4ed1"
 
   url "https://github.com/brave/brave-browser/releases/download/v#{version}/Brave-Browser-#{arch}.dmg",
       verified: "github.com/brave/brave-browser/"
