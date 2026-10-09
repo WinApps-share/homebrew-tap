@@ -1,9 +1,9 @@
 cask "i4" do
   arch arm: "arm64", intel: "x64"
 
-  version "9.10.018"
-  sha256 arm:   "a15ffd5061088743ef4abab503079f4e025ba0f90c3bc297f16f24afa5746151",
-         intel: "0ba74943744d62736bc99e96cd83bc25e871c41de6b05beebd59b170994291aa"
+  version "9.11.003"
+  sha256 arm:   "c56bac51730878b1275e64571b889215aa04f309c421c6df3df3475846eef57d",
+         intel: "40ac3980d0e19e0dfa93b7f283a37ce57e6df7d3412e9653bed3604e465320e6"
 
   url "https://d-updater.i4.cn/i4tools9/download/macos/#{arch}/i4Tools_v#{version}_#{arch}.dmg",
       verified: "d-updater.i4.cn/i4tools9"
