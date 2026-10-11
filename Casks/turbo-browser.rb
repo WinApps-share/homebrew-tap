@@ -1,6 +1,6 @@
 cask "turbo-browser" do
-  version "152.0.7977.126"
-  sha256 "448f62d84d07b93eeac64c4c96359d9c5126eb7206da3a790327937385492416"
+  version "154.0.8037.99"
+  sha256 "3d19fb842b8a58422ed58b3d9b824bb859bb5f201e6f498afcfc7e6ae5bb2927"
 
   url "https://github.com/tbrowser/Turbo-Browser/releases/download/#{version}/TurboSetup_#{version}.dmg"
   name "Turbo Browser"
