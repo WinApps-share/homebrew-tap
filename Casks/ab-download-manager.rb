@@ -1,9 +1,9 @@
 cask "ab-download-manager" do
   arch arm: "arm64", intel: "x64"
 
-  version "1.11.0"
-  sha256 arm:   "0e35931a2aa94c563069acc0f01066620e6bbcd76343389e52ddb115baea2293",
-         intel: "4116d7169e8aa0a9a391a8486df1663184b8f7ffd95d8bde2ba45006f72c4cca"
+  version "1.11.1"
+  sha256 arm:   "8fee777fa6c7240c6977fac1fb43cec3fdaa4e57582803436d10b31cc84cbbfc",
+         intel: "0305b627cce33393df643ad0da4516d3be398380bd210468095292f43a0f7d2d"
 
   url "https://github.com/amir1376/ab-download-manager/releases/download/v#{version}/ABDownloadManager_#{version}_mac_#{arch}.dmg"
   name "AB Download Manager"
