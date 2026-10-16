@@ -1,9 +1,9 @@
 cask "unigetui" do
   arch arm: "arm64", intel: "x64"
 
-  version "2026.3.1"
-  sha256 arm:   "62018676368fc887bd93e6358ec5a2c788a1d8bc03b5e75617c7aa6cc1f99557",
-         intel: "46c98b028a76004254295da610abb7b0033c5acf70233864ecba233babadb75f"
+  version "2026.3.2"
+  sha256 arm:   "9ca28c8484a83cf49cb9b1b01b9a3be45d55acb2fb0828153a27d25b78112761",
+         intel: "594f9565bd98053487e2bcd49d8578cbb4726e5c5c6daa4465e6115cc8e66cc6"
 
   url "https://github.com/Devolutions/UniGetUI/releases/download/v#{version}/UniGetUI.macos-#{arch}.dmg",
       verified: "github.com/Devolutions/UniGetUI/"
