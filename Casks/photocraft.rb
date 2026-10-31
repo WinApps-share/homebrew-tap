@@ -1,6 +1,6 @@
 cask "photocraft" do
-  version "0.17.0"
-  sha256 "6e0903172a7440ce4e71002f5585ba4eff588fa3fc99b78cd9811180cabd5b80"
+  version "0.18.0"
+  sha256 "20335daabedacfed91fa579e77a2ac18d261a735057782b87492827876cb0f91"
 
   url "https://github.com/storytold/photocraft/releases/download/v#{version}/photocraft-#{version}-macos-universal.dmg"
   name "PhotoCraft"
