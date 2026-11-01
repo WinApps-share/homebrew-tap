@@ -1,16 +1,16 @@
 cask "bongocat" do
   arch arm: "aarch64", intel: "x64"
 
-  version "1.1.0"
-  sha256 arm:   "ca6a890b9c1754b8f828627f2d6864b177d5cb0efca1342f7c7da88dcaf1e94e",
-         intel: "7264690b9f33606ce960f274236acee111ce34ff061886ae5c2d5a154c9b4b77"
+  version "2.4.1"
+  sha256 arm:   "4cfa1e959e6ec0827d53872987561e0b3c0daf38465d350374fd774ab0dd59a4",
+         intel: "d3814a583a128b7ade3f94df11431e7e29a0dd8b8a14a39bc943d857d0fbca1a"
 
-  url "https://github.com/ayangweb/BongoCat/releases/download/v#{version}/BongoCat_#{version}_#{arch}.dmg"
+  url "https://github.com/ayangweb/BongoCat/releases/download/v#{version}/BongoCat-#{version}-#{arch}.dmg"
   name "BongoCat"
   desc "小猫桌宠互动软件"
   homepage "https://github.com/ayangweb/BongoCat"
 
-  depends_on :macos
+  depends_on macos: :monterey
 
   app "BongoCat.app"
 
