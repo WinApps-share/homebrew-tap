@@ -1,8 +1,8 @@
 cask "proxypin" do
-  version "1.3.1"
-  sha256 "d4c2d189094346d6441b2434c522caf3342c1653fe1cc0b1f27788b75118ef09"
+  version "1.3.3"
+  sha256 "ba8190b8f31ade5e54e2ad0939d99bf2a47960d60837b14ee3259afad3b7e26f"
 
-  url "https://github.com/wanghongenpin/proxypin/releases/download/v#{version}/proxypin-macos.dmg"
+  url "https://github.com/wanghongenpin/proxypin/releases/download/v#{version}/proxypin-macos-#{version}.dmg"
   name "ProxyPin"
   desc "开源的跨平台 HTTP/HTTPS 抓包工具"
   homepage "https://github.com/wanghongenpin/proxypin"
