@@ -1,11 +1,11 @@
 cask "dsh-desktop" do
-  version "2.0.18"
-  sha256 "a3aad3ac11ba3cd6cbf295809a32fff907152332800a21a0910034ba95379f08"
+  version "2.0.21"
+  sha256 "ec48040c1ac820805e6868f78a50dfa0bd89ea18ff77994b6302065700cff2dc"
 
-  url "https://github.com/anywhere-labs/deepseek-harness-desktop/releases/download/v#{version}/DSH.Desktop-#{version}-universal.dmg"
+  url "https://github.com/anywhere-labs/dsh-desktop/releases/download/v#{version}-next/DSH-NEXT-#{version}-next-universal.dmg"
   name "DeepSeek Desktop"
   desc "第三方 DeepSeek Desktop 客户端"
-  homepage "https://github.com/anywhere-labs/deepseek-harness-desktop"
+  homepage "https://github.com/anywhere-labs/dsh-desktop"
 
   livecheck do
     url :url
@@ -14,7 +14,7 @@ cask "dsh-desktop" do
 
   depends_on macos: :ventura
 
-  app "DSH Desktop.app"
+  app "DSH NEXT.app"
 
-  zap trash: "~/Library/Application Support/DSH Desktop"
+  zap trash: "~/Library/Application Support/DSH NEXT"
 end
