@@ -1,9 +1,9 @@
 cask "motrix" do
   arch arm: "arm64", intel: "x64"
 
-  version "2.3.0"
-  sha256 arm:   "7c3d480c55e7e320eddbfe883b4815afcbd856c40764869e0e70d5a9e63b3bc3",
-         intel: "dfac8a0a287293e1696835cb9da0c9fc8c502e619f6f31db5d47155f116d61a1"
+  version "2.4.0"
+  sha256 arm:   "626329c7f69ee959a7257c6c92029730972e52e21becadb50f1d092b6bf0df0d",
+         intel: "484b867522ad7834d267d097008a00caa47f68b1fcd039b8aee7c1388beeb366"
 
   url "https://github.com/agalwood/Motrix/releases/download/v#{version}/Motrix-#{version}-#{arch}.dmg"
   name "Motrix"
