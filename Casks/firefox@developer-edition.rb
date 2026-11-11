@@ -1,6 +1,6 @@
 cask "firefox@developer-edition" do
-  version "161.0b1"
-  sha256 "5e562fca2b1f68897ed974047da25c5de972dd7ef25daed599eedcb711074ae1"
+  version "161.0b2"
+  sha256 "45bf6ee6dee0de4c5eb53076649737bc00f313b9de1ee12f00154cc13e83e1c7"
 
   url "https://download-installer.cdn.mozilla.net/pub/devedition/releases/#{version}/mac/zh-CN/Firefox%20#{version}.dmg"
   name "Mozilla Firefox Developer Edition"
