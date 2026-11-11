@@ -1,9 +1,9 @@
 cask "dbx" do
   arch arm: "arm64", intel: "x64"
 
-  version "0.6.68"
-  sha256 arm:   "7fe34b07e7b8801e485f3b276b755b76f4ec445bd07178e347f7ba94d5bbc3cb",
-         intel: "1b6a82d5cd08d24a7d16f4b66a8789955fb56bc473c2601bbb8f57f59669bbd5"
+  version "0.6.69"
+  sha256 arm:   "564311662b3618fe0b4e0199b1f40bc428c2dd607b34612cfad24bbea48f8a6b",
+         intel: "8ddbf1ad21a969e4f44e43db80933af173c1b609bdd67ed71683c344462568ee"
 
   url "https://github.com/t8y2/dbx/releases/download/v#{version}/DBX_#{version}_#{arch}.dmg"
   name "DBX"
