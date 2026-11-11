@@ -1,9 +1,9 @@
 cask "vscode" do
   arch arm: "arm64", intel: "x64"
 
-  version "1.145.3,dcd3ad6e368fbe19d03f37054a40dbaf40d676f4"
-  sha256 arm:   "aa4b6e31e0d5d7b163e51c45ee5cd7fa100d4d91378e02e07fb7ccdd09bed75f",
-         intel: "548042e1ec4e6ae051df2546d35f76c49ebaa27bc2111436eb9c139cb9ca8c1b"
+  version "1.146.0,69047191fc427f2f92828279aae1d90d8eeda7ab"
+  sha256 arm:   "0312d0f42f4d55ce872c9afcb64f182b70fa74c82d10b91c98ed22c12d992a63",
+         intel: "94a051a6b1b712ba1e994023564cdf1c055636279fe45efbda7099e86cc6b22f"
 
   url "https://vscode.download.prss.microsoft.com/dbazure/download/stable/#{version.csv.second}/VSCode-darwin-#{arch}.dmg"
   name "Microsoft Visual Studio Code"
