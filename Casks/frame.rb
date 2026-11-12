@@ -1,9 +1,9 @@
 cask "frame" do
   arch arm: "aarch64", intel: "x86_64"
 
-  version "0.33.1"
-  sha256 arm:   "c1f1efc22da31f293cbe3bdc2f0adfb6ab22b73a058ad71de58342ecf74f8458",
-         intel: "e9b6df8bb9752010b9e91532a974c3d49bce50493ff9493443b2bf89bc64e4ae"
+  version "0.34.0"
+  sha256 arm:   "16d1d01602507900e67e9c7b79b16564c936dddd632dd639736c0bb92513a2a7",
+         intel: "a67780b632c27df52c82dc6ddc31379a578f569dbe0a19854d53f56b0902be73"
 
   url "https://github.com/66HEX/frame/releases/download/#{version}/Frame-#{arch}.dmg",
       verified: "github.com/66HEX/frame/"
@@ -16,7 +16,7 @@ cask "frame" do
     strategy :github_latest
   end
 
-  depends_on macos: :big_sur
+  depends_on :macos
 
   app "Frame.app"
 
