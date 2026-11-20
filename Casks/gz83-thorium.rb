@@ -1,9 +1,9 @@
 cask "gz83-thorium" do
   arch arm: "ARM64", intel: "x64"
 
-  version "M156.0.8078.80"
-  sha256  arm:   "494675560b26350261ee8c8fca1ebe554ce15d2343276b2bab7f831ac89f9668",
-          intel: "9fa26437a622775ebee99ff8c947e17a36567d88292642ce28aa2a7dbc01a761"
+  version "M158.0.8127.41"
+  sha256  arm:   "a470ccc26912dbef04c06a9d8dc0100a8da5efdace16d8f14e9bf3ec316ebe30",
+          intel: "22f936bbd16f3b37867f0cba7361a5ff485374836fa70569f5316fa2e93467fd"
 
   url "https://github.com/gz83/thorium/releases/download/#{version}/Thorium_MacOS_#{arch}.dmg"
   name "Thorium"
