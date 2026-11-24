@@ -1,6 +1,6 @@
 cask "firefox-cn" do
-  version "160.0.1"
-  sha256 "b11def29e27c792bcdaed85b43dce55384c0f67045c5674b76619bf6d139e9f6"
+  version "161.0"
+  sha256 "281677036be102dd3dcf86722f371b84be26ddf88afe8f3e51ad6de0d22c7703"
 
   url "https://archive.mozilla.org/pub/firefox/releases/#{version}/mac/zh-CN/Firefox%20#{version}.dmg",
       verified: "archive.mozilla.org/pub/firefox/releases/"
