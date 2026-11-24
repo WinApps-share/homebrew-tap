@@ -1,6 +1,6 @@
 cask "localsend" do
-  version "1.18.2"
-  sha256 "126860d56f6f49b11845f601aac51de27a49b16d2b48102415da91e0e37e5155"
+  version "1.19.0"
+  sha256 "5645789cc976298b893267c025f0945d8673baed3bb302a201eb8b96991e43d4"
 
   url "https://github.com/localsend/localsend/releases/download/v#{version}/LocalSend-#{version}.dmg",
       verified: "github.com/localsend/localsend/"
@@ -8,7 +8,7 @@ cask "localsend" do
   desc "Open-source cross-platform alternative to AirDrop"
   homepage "https://localsend.org/"
 
-  depends_on macos: :big_sur
+  depends_on :macos
 
   app "LocalSend.app"
 
